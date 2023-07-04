@@ -2,15 +2,22 @@ from dotenv import load_dotenv
 import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores import FAISS 
+from langchain.chains.question_answering import load_qa_chain
+from langchain.llms import OpenAI
+from langchain.callbacks import get_openai_callback
 
+ 
 
 def main():
     load_dotenv()
     st.set_page_config(page_title="Document ")
     st.header("Ask your PDF")
-    st.subheader("This is a GPT powered webapp to ask queries to your documents built using Langchain backend and Streamlit")    
+    st.subheader("Upload your document here")    
     #upload file
     pdf = st.file_uploader("Upload your PDF here", type="pdf")
+    st.markdown("Please wait while the document is processed.")
     
     #extract the text
     if pdf:
@@ -28,7 +35,31 @@ def main():
          )
         chunks = text_splitter.split_text(text)
 
-        st.write(chunks)
+        # create embeddings
+        embeddings = OpenAIEmbeddings()
+        knowledge_base = FAISS.from_texts(chunks, embeddings)
+
+        # show user input
+        user_question = st.text_input("Ask a question about you PDF:")
+        if user_question:
+            docs = knowledge_base.similarity_search(user_question)
+
+            llm = OpenAI()
+            chain = load_qa_chain(llm, chain_type="stuff")
+            with get_openai_callback() as cb:
+                response = chain.run(input_documents=docs,question=user_question)
+                print(cb)
+
+            st.write(response)
+
+            st.write("API request details :")
+            st.write(cb)
+        
+
+        st.sidebar.title("Information Retrieval Application" )
+        st.sidebar.write("This web app is powered by GPT and allows you to ask queries to your documents."
+                         "It is built using the Langchain backend and Streamlit, providing a seamless and "
+                         "intuitive user experience for information retrieval and exploration")
 
 if __name__ == "__main__":
     main()
