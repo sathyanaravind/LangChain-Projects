@@ -3,7 +3,7 @@ A repository containing code implementation using LangChain
 
 # Screenshot of App
 
-![Alt Text](answered.PNG)
-![Alt Text](idontknow.PNG)
+![Response to the question related to the document](answered.PNG)
+![Response to the question related to the document](idontknow.PNG)
 
 
